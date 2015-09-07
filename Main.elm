@@ -23,15 +23,7 @@ port main =
       emitError message
 
     Search sourceFile query ->
-      tryCatch emitError <|
-        loadSource sourceFile
-          `andThen` \source -> loadDeps
-          `andThen` \deps -> Task.fromResult (parseDeps deps)
-          `andThen` \docPaths -> downloadDocs docPaths
-          `andThen` \_ -> loadDocs docPaths
-          `andThen` \depsDocs -> getProjectDocs
-          `andThen` \projectDocs -> Task.succeed (projectDocs ++ depsDocs)
-          `andThen` \docs -> Console.log (Oracle.search query source docs)
+      search sourceFile query
 
 
 usage : String
@@ -131,6 +123,19 @@ getProjectDocs =
       generate
         `andThen` \_ -> load
         `andThen` \docs -> Task.succeed [(path, docs)]
+
+
+search : String -> String -> Task String ()
+search sourceFile query =
+  tryCatch emitError <|
+    loadSource sourceFile
+      `andThen` \source -> loadDeps
+      `andThen` \deps -> Task.fromResult (parseDeps deps)
+      `andThen` \docPaths -> downloadDocs docPaths
+      `andThen` \_ -> loadDocs docPaths
+      `andThen` \depsDocs -> getProjectDocs
+      `andThen` \projectDocs -> Task.succeed (projectDocs ++ depsDocs)
+      `andThen` \docs -> Console.log (Oracle.search query source docs)
 
 
 emitError : String -> Task x ()
